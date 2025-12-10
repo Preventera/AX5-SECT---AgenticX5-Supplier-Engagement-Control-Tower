@@ -1,0 +1,50 @@
+{
+    // ========================================================================
+    // AX5-SECT - Extensions VS Code Recommandées
+    // ========================================================================
+    "recommendations": [
+        // Python
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.debugpy",
+        
+        // Linting & Formatting
+        "charliermarsh.ruff",
+        "ms-python.black-formatter",
+        
+        // Database
+        "ckolkman.vscode-postgres",
+        "mtxr.sqltools",
+        "mtxr.sqltools-driver-pg",
+        
+        // Git
+        "eamodio.gitlens",
+        "mhutchie.git-graph",
+        
+        // API Testing
+        "humao.rest-client",
+        "Postman.postman-for-vscode",
+        
+        // Markdown
+        "yzhang.markdown-all-in-one",
+        "bierner.markdown-preview-github-styles",
+        
+        // JSON & YAML
+        "esbenp.prettier-vscode",
+        "redhat.vscode-yaml",
+        
+        // Docker (optionnel)
+        "ms-azuretools.vscode-docker",
+        
+        // Utilities
+        "streetsidesoftware.code-spell-checker",
+        "streetsidesoftware.code-spell-checker-french",
+        "EditorConfig.EditorConfig",
+        "aaron-bond.better-comments",
+        "wayou.vscode-todo-highlight",
+        
+        // AI Assistant
+        "anthropic.claude-code"
+    ],
+    "unwantedRecommendations": []
+}
