@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     debug: bool = False
     
+    # Mode Mock (pour développer sans crédits API)
+    mock_mode: bool = Field(default=True, env="MOCK_MODE")
+    
     # Anthropic (Claude)
-    anthropic_api_key: str = Field(..., env="ANTHROPIC_API_KEY")
+    anthropic_api_key: str = Field(default="", env="ANTHROPIC_API_KEY")
     claude_model: str = "claude-sonnet-4-20250514"
     claude_max_tokens: int = 4096
     

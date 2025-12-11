@@ -7,21 +7,39 @@ import json
 import re
 from typing import Dict, Any, Optional, List
 from datetime import datetime
-from anthropic import Anthropic
 
 from .state import (
     AX5SECTState, AgentType, MessageRole, AgentMessage, 
     TaskResult, StateHelpers, BusinessContext
 )
 from .prompts import get_agent_prompt
+from .mock_responses import (
+    get_mock_orchestrator_response,
+    get_mock_knowledge_response,
+    get_mock_data_modeler_response,
+    get_mock_campaign_response,
+    get_mock_content_response,
+    generate_mock_synthesis
+)
+
+
+# ============================================================================
+# CONFIGURATION MODE MOCK
+# ============================================================================
+
+def is_mock_mode() -> bool:
+    """Vérifie si le mode mock est activé"""
+    from .config import settings
+    return settings.mock_mode
 
 
 # ============================================================================
 # CLIENT ANTHROPIC
 # ============================================================================
 
-def get_anthropic_client() -> Anthropic:
+def get_anthropic_client():
     """Crée un client Anthropic (lazy initialization)"""
+    from anthropic import Anthropic
     from .config import settings
     return Anthropic(api_key=settings.anthropic_api_key)
 
@@ -34,6 +52,10 @@ def call_claude(
     temperature: float = 0.7
 ) -> str:
     """Appelle Claude avec un prompt système et un message utilisateur"""
+    # Mode mock : ne pas appeler l'API
+    if is_mock_mode():
+        return json.dumps({"mock": True, "message": "Mode démonstration actif"})
+    
     client = get_anthropic_client()
     
     response = client.messages.create(
@@ -74,6 +96,30 @@ def orchestrator_node(state: AX5SECTState) -> Dict[str, Any]:
     """
     user_input = state["user_input"]
     
+    # MODE MOCK : utiliser les réponses simulées
+    if is_mock_mode():
+        parsed = get_mock_orchestrator_response(user_input)
+        agent_names = parsed.get("agents_to_call", [])
+        agent_mapping = {
+            "knowledge_miner": AgentType.KNOWLEDGE_MINER,
+            "data_modeler": AgentType.DATA_MODELER,
+            "campaign_manager": AgentType.CAMPAIGN_MANAGER,
+            "content_generator": AgentType.CONTENT_GENERATOR,
+        }
+        agents_to_call = [agent_mapping[name] for name in agent_names if name in agent_mapping]
+        
+        return {
+            "routing_decision": parsed,
+            "agent_queue": agents_to_call,
+            "current_agent": AgentType.ORCHESTRATOR,
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content=f"[MOCK] Analyse terminée. Agents : {[a.value for a in agents_to_call]}",
+                agent=AgentType.ORCHESTRATOR
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude
     # Construire le contexte pour l'orchestrateur
     context_parts = []
     
@@ -155,6 +201,28 @@ def knowledge_miner_node(state: AX5SECTState) -> Dict[str, Any]:
     Nœud Knowledge Miner : recherche et agrégation de connaissances
     """
     user_input = state["user_input"]
+    
+    # MODE MOCK : utiliser les réponses simulées
+    if is_mock_mode():
+        parsed = get_mock_knowledge_response()
+        task_result = TaskResult(
+            task_type="knowledge_research",
+            success=True,
+            result=parsed,
+            agent=AgentType.KNOWLEDGE_MINER
+        )
+        return {
+            "task_results": [task_result],
+            "last_agent_result": task_result,
+            "agents_called": state.get("agents_called", []) + [AgentType.KNOWLEDGE_MINER],
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content=f"[MOCK] Recherche terminée : {parsed.get('topic', 'IMDS/PCF')}",
+                agent=AgentType.KNOWLEDGE_MINER
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude
     routing = state.get("routing_decision", {})
     
     # Construire le message pour le Knowledge Miner
@@ -209,6 +277,28 @@ def data_modeler_node(state: AX5SECTState) -> Dict[str, Any]:
     Nœud Data Modeler : modélisation des données et workflows
     """
     user_input = state["user_input"]
+    
+    # MODE MOCK : utiliser les réponses simulées
+    if is_mock_mode():
+        parsed = get_mock_data_modeler_response()
+        task_result = TaskResult(
+            task_type="data_modeling",
+            success=True,
+            result=parsed,
+            agent=AgentType.DATA_MODELER
+        )
+        return {
+            "task_results": [task_result],
+            "last_agent_result": task_result,
+            "agents_called": state.get("agents_called", []) + [AgentType.DATA_MODELER],
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content=f"[MOCK] Modélisation terminée : {parsed.get('scope', 'Hub IMDS/PCF')}",
+                agent=AgentType.DATA_MODELER
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude
     routing = state.get("routing_decision", {})
     
     # Construire le contexte avec les résultats précédents
@@ -263,6 +353,28 @@ def campaign_manager_node(state: AX5SECTState) -> Dict[str, Any]:
     Nœud Campaign Manager : conception de campagnes et KPI
     """
     user_input = state["user_input"]
+    
+    # MODE MOCK : utiliser les réponses simulées
+    if is_mock_mode():
+        parsed = get_mock_campaign_response()
+        task_result = TaskResult(
+            task_type="campaign_design",
+            success=True,
+            result=parsed,
+            agent=AgentType.CAMPAIGN_MANAGER
+        )
+        return {
+            "task_results": [task_result],
+            "last_agent_result": task_result,
+            "agents_called": state.get("agents_called", []) + [AgentType.CAMPAIGN_MANAGER],
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content=f"[MOCK] Campagne conçue : {parsed.get('campaign_design', {}).get('name', 'Campagne PCF')}",
+                agent=AgentType.CAMPAIGN_MANAGER
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude
     routing = state.get("routing_decision", {})
     
     # Construire le contexte
@@ -320,6 +432,28 @@ def content_generator_node(state: AX5SECTState) -> Dict[str, Any]:
     Nœud Content Generator : génération de contenus opérationnels
     """
     user_input = state["user_input"]
+    
+    # MODE MOCK : utiliser les réponses simulées
+    if is_mock_mode():
+        parsed = get_mock_content_response()
+        task_result = TaskResult(
+            task_type="content_generation",
+            success=True,
+            result=parsed,
+            agent=AgentType.CONTENT_GENERATOR
+        )
+        return {
+            "task_results": [task_result],
+            "last_agent_result": task_result,
+            "agents_called": state.get("agents_called", []) + [AgentType.CONTENT_GENERATOR],
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content=f"[MOCK] Contenu généré : {parsed.get('content_type', 'email')}",
+                agent=AgentType.CONTENT_GENERATOR
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude
     routing = state.get("routing_decision", {})
     
     # Construire le contexte
@@ -381,10 +515,25 @@ def synthesizer_node(state: AX5SECTState) -> Dict[str, Any]:
     """
     user_input = state["user_input"]
     task_results = state.get("task_results", [])
+    agents_called = state.get("agents_called", [])
     
     if not task_results:
         return {"final_response": "Je n'ai pas pu traiter votre demande. Veuillez reformuler."}
     
+    # MODE MOCK : utiliser la synthèse simulée
+    if is_mock_mode():
+        agent_names = [a.value for a in agents_called] if agents_called else ["knowledge_miner"]
+        final_response = generate_mock_synthesis(user_input, agent_names)
+        return {
+            "final_response": final_response,
+            "messages": [AgentMessage(
+                role=MessageRole.ASSISTANT,
+                content="[MOCK] Synthèse terminée.",
+                agent=AgentType.ORCHESTRATOR
+            )]
+        }
+    
+    # MODE NORMAL : appeler Claude pour la synthèse
     # Construire le prompt de synthèse
     synthesis_prompt = """Tu es un assistant expert en IMDS, PCF et Supplier Engagement.
 
