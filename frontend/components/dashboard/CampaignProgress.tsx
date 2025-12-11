@@ -1,61 +1,53 @@
 'use client';
 
-import { ChevronRight } from 'lucide-react';
+import { Target, Calendar, ChevronRight, FileText, Leaf } from 'lucide-react';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { Campaign, formatDate } from '@/lib/api';
 
-const campaigns = [
-  {
-    id: 1,
-    name: 'Campagne PCF Q1 2025 - Tier 1',
-    type: 'PCF',
-    progress: 68,
-    suppliers: { total: 10, responded: 7, validated: 5 },
-    deadline: '31 mars 2025',
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'IMDS Compliance 2025',
-    type: 'IMDS',
-    progress: 45,
-    suppliers: { total: 12, responded: 6, validated: 4 },
-    deadline: '30 juin 2025',
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Campagne Mixte Scope 3',
-    type: 'MIXED',
-    progress: 0,
-    suppliers: { total: 8, responded: 0, validated: 0 },
-    deadline: '30 sept 2025',
-    status: 'draft',
-  },
-];
+interface CampaignProgressProps {
+  campaigns: Campaign[];
+}
 
-const typeColors = {
-  PCF: 'bg-green-100 text-green-700',
-  IMDS: 'bg-blue-100 text-blue-700',
-  MIXED: 'bg-purple-100 text-purple-700',
-};
+export default function CampaignProgress({ campaigns }: CampaignProgressProps) {
+  const getTypeIcon = (type: string) => {
+    switch (type) {
+      case 'PCF': return <Leaf className="w-3 h-3" />;
+      case 'IMDS': return <FileText className="w-3 h-3" />;
+      default: return <Target className="w-3 h-3" />;
+    }
+  };
 
-const statusLabels = {
-  active: { label: 'Active', class: 'bg-green-100 text-green-700' },
-  draft: { label: 'Brouillon', class: 'bg-gray-100 text-gray-700' },
-  completed: { label: 'Terminée', class: 'bg-blue-100 text-blue-700' },
-  paused: { label: 'En pause', class: 'bg-yellow-100 text-yellow-700' },
-};
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'PCF': return 'bg-green-100 text-green-700';
+      case 'IMDS': return 'bg-blue-100 text-blue-700';
+      default: return 'bg-purple-100 text-purple-700';
+    }
+  };
 
-export default function CampaignProgress() {
+  const getProgressColor = (progress: number) => {
+    if (progress >= 70) return 'bg-green-500';
+    if (progress >= 40) return 'bg-yellow-500';
+    return 'bg-gray-300';
+  };
+
+  if (campaigns.length === 0) {
+    return (
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Campagnes en cours</h3>
+        <div className="text-center py-8 text-gray-500">
+          <Target className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+          <p>Aucune campagne active</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="card">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="card-header mb-0">Campagnes en cours</h3>
-        <Link 
-          href="/campaigns" 
-          className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
-        >
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Campagnes en cours</h3>
+        <Link href="/campaigns" className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1">
           Voir tout
           <ChevronRight className="w-4 h-4" />
         </Link>
@@ -63,56 +55,44 @@ export default function CampaignProgress() {
 
       <div className="space-y-4">
         {campaigns.map((campaign) => (
-          <div 
-            key={campaign.id}
-            className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
-          >
-            <div className="flex items-start justify-between mb-3">
+          <div key={campaign.id} className="p-4 border border-gray-100 rounded-lg hover:border-gray-200 transition-colors">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
-                <span className={cn('badge', typeColors[campaign.type as keyof typeof typeColors])}>
+                <span className={`badge flex items-center gap-1 text-xs ${getTypeColor(campaign.type)}`}>
+                  {getTypeIcon(campaign.type)}
                   {campaign.type}
                 </span>
-                <span className={cn('badge', statusLabels[campaign.status as keyof typeof statusLabels].class)}>
-                  {statusLabels[campaign.status as keyof typeof statusLabels].label}
-                </span>
+                <span className="badge bg-green-100 text-green-700 text-xs">Active</span>
               </div>
-              <span className="text-sm text-gray-500">Échéance: {campaign.deadline}</span>
-            </div>
-            
-            <h4 className="font-semibold text-gray-900 mb-2">{campaign.name}</h4>
-            
-            <div className="flex items-center gap-4 mb-3">
-              <div className="flex-1">
-                <div className="flex items-center justify-between text-sm mb-1">
-                  <span className="text-gray-600">Progression</span>
-                  <span className="font-medium text-gray-900">{campaign.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={cn(
-                      'h-2 rounded-full transition-all duration-500',
-                      campaign.progress >= 70 ? 'bg-green-500' :
-                      campaign.progress >= 40 ? 'bg-yellow-500' : 'bg-gray-400'
-                    )}
-                    style={{ width: `${campaign.progress}%` }}
-                  />
-                </div>
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Calendar className="w-3 h-3" />
+                Échéance: {formatDate(campaign.end_date)}
               </div>
             </div>
-            
-            <div className="flex items-center gap-6 text-sm">
-              <div>
-                <span className="text-gray-500">Fournisseurs:</span>
-                <span className="font-medium text-gray-900 ml-1">{campaign.suppliers.total}</span>
+
+            {/* Title */}
+            <h4 className="font-medium text-gray-900 mb-3">{campaign.name}</h4>
+
+            {/* Progress */}
+            <div className="mb-3">
+              <div className="flex items-center justify-between text-sm mb-1">
+                <span className="text-gray-600">Progression</span>
+                <span className="font-medium text-gray-900">{campaign.progress}%</span>
               </div>
-              <div>
-                <span className="text-gray-500">Réponses:</span>
-                <span className="font-medium text-blue-600 ml-1">{campaign.suppliers.responded}</span>
+              <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${getProgressColor(campaign.progress)} transition-all`}
+                  style={{ width: `${campaign.progress}%` }}
+                />
               </div>
-              <div>
-                <span className="text-gray-500">Validés:</span>
-                <span className="font-medium text-green-600 ml-1">{campaign.suppliers.validated}</span>
-              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="flex gap-4 text-sm text-gray-500">
+              <span>Fournisseurs: <span className="font-medium text-gray-900">{campaign.suppliers_total}</span></span>
+              <span>Réponses: <span className="font-medium text-gray-900">{campaign.suppliers_responded}</span></span>
+              <span>Validés: <span className="font-medium text-green-600">{campaign.suppliers_validated}</span></span>
             </div>
           </div>
         ))}

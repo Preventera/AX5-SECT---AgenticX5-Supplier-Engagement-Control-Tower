@@ -1,88 +1,83 @@
 'use client';
 
-import { CheckCircle2, Clock, AlertCircle, FileCheck, Leaf, Mail } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { FileCheck, Leaf, Mail, AlertTriangle, Clock } from 'lucide-react';
 
-const activities = [
-  {
-    id: 1,
-    type: 'pcf_submitted',
-    title: 'PCF soumis',
-    description: 'Bosch Automotive a soumis son PCF',
-    time: 'Il y a 5 min',
-    icon: Leaf,
-    iconBg: 'bg-green-100',
-    iconColor: 'text-green-600',
-  },
-  {
-    id: 2,
-    type: 'imds_validated',
-    title: 'IMDS validé',
-    description: 'Valeo SA - MDS-789456',
-    time: 'Il y a 15 min',
-    icon: CheckCircle2,
-    iconBg: 'bg-blue-100',
-    iconColor: 'text-blue-600',
-  },
-  {
-    id: 3,
-    type: 'reminder_sent',
-    title: 'Relance envoyée',
-    description: '3 fournisseurs relancés',
-    time: 'Il y a 1 heure',
-    icon: Mail,
-    iconBg: 'bg-purple-100',
-    iconColor: 'text-purple-600',
-  },
-  {
-    id: 4,
-    type: 'deadline_warning',
-    title: 'Échéance proche',
-    description: 'Continental AG - PCF attendu dans 3 jours',
-    time: 'Il y a 2 heures',
-    icon: AlertCircle,
-    iconBg: 'bg-yellow-100',
-    iconColor: 'text-yellow-600',
-  },
-  {
-    id: 5,
-    type: 'imds_pending',
-    title: 'IMDS en attente',
-    description: 'Denso Corporation - révision demandée',
-    time: 'Il y a 3 heures',
-    icon: Clock,
-    iconBg: 'bg-orange-100',
-    iconColor: 'text-orange-600',
-  },
-];
+interface Activity {
+  type: string;
+  title: string;
+  description: string;
+  status: string;
+  timestamp: string;
+}
 
-export default function RecentActivity() {
+interface RecentActivityProps {
+  activities: Activity[];
+}
+
+export default function RecentActivity({ activities }: RecentActivityProps) {
+  const getIcon = (type: string) => {
+    switch (type) {
+      case 'pcf_submission': return <Leaf className="w-4 h-4" />;
+      case 'imds_submission': return <FileCheck className="w-4 h-4" />;
+      case 'reminder_sent': return <Mail className="w-4 h-4" />;
+      case 'deadline_warning': return <AlertTriangle className="w-4 h-4" />;
+      default: return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getIconColor = (type: string, status: string) => {
+    if (status === 'validated') return 'bg-green-100 text-green-600';
+    if (status === 'rejected') return 'bg-red-100 text-red-600';
+    if (type === 'deadline_warning') return 'bg-yellow-100 text-yellow-600';
+    if (type === 'reminder_sent') return 'bg-blue-100 text-blue-600';
+    return 'bg-gray-100 text-gray-600';
+  };
+
+  const formatTime = (timestamp: string) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `Il y a ${days}j`;
+    if (hours > 0) return `Il y a ${hours}h`;
+    if (minutes > 0) return `Il y a ${minutes} min`;
+    return 'À l\'instant';
+  };
+
+  if (activities.length === 0) {
+    return (
+      <div className="card">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité récente</h3>
+        <div className="text-center py-8 text-gray-500">
+          <Clock className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+          <p>Aucune activité récente</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="card h-full">
-      <h3 className="card-header">Activité récente</h3>
-      
+    <div className="card">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">Activité récente</h3>
       <div className="space-y-4">
         {activities.map((activity, index) => (
-          <div 
-            key={activity.id}
-            className={cn(
-              'flex items-start gap-3 pb-4',
-              index < activities.length - 1 && 'border-b border-gray-100'
-            )}
-          >
-            <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', activity.iconBg)}>
-              <activity.icon className={cn('w-4 h-4', activity.iconColor)} />
+          <div key={index} className="flex items-start gap-3">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${getIconColor(activity.type, activity.status)}`}>
+              {getIcon(activity.type)}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">{activity.title}</p>
               <p className="text-sm text-gray-500 truncate">{activity.description}</p>
-              <p className="text-xs text-gray-400 mt-1">{activity.time}</p>
+              <p className="text-xs text-gray-400 mt-1">{formatTime(activity.timestamp)}</p>
             </div>
           </div>
         ))}
       </div>
-      
-      <button className="w-full mt-4 text-sm text-primary-600 hover:text-primary-700 font-medium">
+      <button className="w-full mt-4 py-2 text-sm text-primary-600 hover:text-primary-700 font-medium">
         Voir tout l'historique
       </button>
     </div>

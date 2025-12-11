@@ -1,137 +1,186 @@
-// API Configuration
+/**
+ * AX5-SECT API Client
+ * Connexion aux vraies données PostgreSQL
+ */
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-// Types
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  agent?: string;
-  timestamp?: string;
-}
-
-export interface ChatResponse {
-  response: string;
-  agent_used: string;
-  agents_called: string[];
-  processing_time: number;
-}
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export interface Supplier {
   id: number;
-  external_id: string;
+  external_id: string | null;
   name: string;
-  parent_group?: string;
-  country_code?: string;
-  region?: string;
-  supplier_type?: string;
-  supply_chain_level?: string;
-  main_part_families?: string[];
+  parent_group: string | null;
+  country_code: string | null;
+  region: string | null;
+  supplier_type: string | null;
+  supply_chain_level: string | null;
+  main_part_families: string[] | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface Campaign {
   id: number;
   name: string;
-  type: 'IMDS' | 'PCF' | 'MIXED';
-  objective?: string;
-  status: string;
-  start_date?: string;
-  end_date?: string;
+  type: string;
+  status: string | null;
+  objective: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  suppliers_total: number;
+  suppliers_responded: number;
+  suppliers_validated: number;
+  progress: number;
+}
+
+export interface SupplierStats {
+  total: number;
+  by_level: { tier1: number; tier2: number };
+  by_region: Record<string, number>;
+  pcf_maturity: { advanced: number; intermediate: number; beginner: number };
+}
+
+export interface CampaignStats {
+  total: number;
+  active: number;
+  draft: number;
+  completed: number;
+  total_suppliers_engaged: number;
 }
 
 export interface DashboardStats {
-  suppliers: {
-    total: number;
-    by_level: Record<string, number>;
-  };
-  campaigns: {
-    total: number;
-    active: number;
-    by_type: Record<string, number>;
-  };
-  submissions: {
-    imds_total: number;
-    pcf_total: number;
-    pcf_validated: number;
-  };
-  emissions: {
-    total_kgco2e: number;
-  };
+  suppliers: { total: number; tier1: number; tier2: number };
+  campaigns: { total: number; active: number };
+  imds: { total: number; validated: number; pending: number; rejected: number };
+  pcf: { total: number; validated: number; pending: number; coverage: number; suppliers_covered: number };
+  emissions: { total_kgco2e: number; total_tco2e: number };
 }
 
-// API Functions
-export async function sendChatMessage(message: string): Promise<ChatResponse> {
-  const response = await fetch(`${API_BASE_URL}/chat`, {
-    method: 'POST',
+export interface ChatResponse {
+  response: string;
+  thread_id: string;
+  agents_called: string[];
+  iteration_count: number;
+  errors: string[];
+}
+
+// ============================================================================
+// API FUNCTIONS
+// ============================================================================
+
+async function fetchAPI<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  const response = await fetch(url, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...options?.headers,
     },
-    body: JSON.stringify({ message }),
   });
-  
+
   if (!response.ok) {
-    throw new Error(`Chat error: ${response.statusText}`);
+    throw new Error(`API Error: ${response.status} ${response.statusText}`);
   }
-  
+
   return response.json();
 }
 
-export async function getHealthStatus(): Promise<{ status: string; database?: string }> {
-  const response = await fetch(`${API_BASE_URL}/health`);
-  return response.json();
+// Health
+export async function getHealthStatus() {
+  return fetchAPI<{ status: string; version: string }>('/health');
 }
 
-export async function getSuppliers(): Promise<Supplier[]> {
-  const response = await fetch(`${API_BASE_URL}/suppliers`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch suppliers');
-  }
-  return response.json();
+// Chat
+export async function sendChatMessage(message: string, threadId?: string): Promise<ChatResponse> {
+  return fetchAPI<ChatResponse>('/chat', {
+    method: 'POST',
+    body: JSON.stringify({ message, thread_id: threadId }),
+  });
+}
+
+// Suppliers
+export async function getSuppliers(params?: {
+  search?: string;
+  supply_chain_level?: string;
+  country_code?: string;
+}): Promise<Supplier[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.search) searchParams.append('search', params.search);
+  if (params?.supply_chain_level) searchParams.append('supply_chain_level', params.supply_chain_level);
+  if (params?.country_code) searchParams.append('country_code', params.country_code);
+
+  const query = searchParams.toString();
+  return fetchAPI<Supplier[]>(`/suppliers${query ? `?${query}` : ''}`);
 }
 
 export async function getSupplier(id: number): Promise<Supplier> {
-  const response = await fetch(`${API_BASE_URL}/suppliers/${id}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch supplier');
-  }
-  return response.json();
+  return fetchAPI<Supplier>(`/suppliers/${id}`);
 }
 
-export async function getCampaigns(): Promise<Campaign[]> {
-  const response = await fetch(`${API_BASE_URL}/campaigns`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch campaigns');
-  }
-  return response.json();
+export async function getSuppliersStats(): Promise<SupplierStats> {
+  return fetchAPI<SupplierStats>('/suppliers/stats');
+}
+
+// Campaigns
+export async function getCampaigns(params?: {
+  type?: string;
+  status?: string;
+}): Promise<Campaign[]> {
+  const searchParams = new URLSearchParams();
+  if (params?.type) searchParams.append('type', params.type);
+  if (params?.status) searchParams.append('status', params.status);
+
+  const query = searchParams.toString();
+  return fetchAPI<Campaign[]>(`/campaigns${query ? `?${query}` : ''}`);
 }
 
 export async function getCampaign(id: number): Promise<Campaign> {
-  const response = await fetch(`${API_BASE_URL}/campaigns/${id}`);
-  if (!response.ok) {
-    throw new Error('Failed to fetch campaign');
-  }
-  return response.json();
+  return fetchAPI<Campaign>(`/campaigns/${id}`);
 }
 
+export async function getCampaignsStats(): Promise<CampaignStats> {
+  return fetchAPI<CampaignStats>('/campaigns/stats');
+}
+
+// Dashboard
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
-  if (!response.ok) {
-    // Return mock data if endpoint doesn't exist yet
-    return {
-      suppliers: { total: 12, by_level: { tier1: 10, tier2: 2 } },
-      campaigns: { total: 3, active: 2, by_type: { PCF: 1, IMDS: 1, MIXED: 1 } },
-      submissions: { imds_total: 15, pcf_total: 25, pcf_validated: 18 },
-      emissions: { total_kgco2e: 12500.5 },
-    };
-  }
-  return response.json();
+  return fetchAPI<DashboardStats>('/dashboard/stats');
 }
 
-// Utility function for formatting
-export function formatDate(dateString: string): string {
+export async function getDashboardOverview() {
+  return fetchAPI<{ stats: DashboardStats; active_campaigns: Campaign[] }>('/dashboard/overview');
+}
+
+export async function getRecentActivity(limit: number = 10) {
+  return fetchAPI<Array<{
+    type: string;
+    title: string;
+    description: string;
+    status: string;
+    timestamp: string;
+  }>>(`/dashboard/activity?limit=${limit}`);
+}
+
+export async function getEmissionsTrend(months: number = 6) {
+  return fetchAPI<Array<{ month: string; collected: number; validated: number }>>(
+    `/dashboard/emissions/trend?months=${months}`
+  );
+}
+
+// ============================================================================
+// UTILS
+// ============================================================================
+
+export function formatDate(dateString: string | null): string {
+  if (!dateString) return '-';
   return new Date(dateString).toLocaleDateString('fr-FR', {
-    year: 'numeric',
-    month: 'short',
     day: 'numeric',
+    month: 'short',
+    year: 'numeric',
   });
 }
 
@@ -139,9 +188,37 @@ export function formatNumber(num: number): string {
   return new Intl.NumberFormat('fr-FR').format(num);
 }
 
-export function formatEmissions(kgCO2e: number): string {
-  if (kgCO2e >= 1000) {
-    return `${(kgCO2e / 1000).toFixed(1)} t CO₂e`;
-  }
-  return `${kgCO2e.toFixed(1)} kg CO₂e`;
+export function getCountryFlag(code: string | null): string {
+  const flags: Record<string, string> = {
+    CA: '🇨🇦',
+    US: '🇺🇸',
+    DE: '🇩🇪',
+    FR: '🇫🇷',
+    JP: '🇯🇵',
+    CN: '🇨🇳',
+    MX: '🇲🇽',
+  };
+  return code ? flags[code] || '🌍' : '🌍';
+}
+
+export function getSupplierLevelLabel(level: string | null): string {
+  const labels: Record<string, string> = {
+    tier1: 'Tier 1',
+    tier2: 'Tier 2',
+  };
+  return level ? labels[level] || level : '-';
+}
+
+export function getStatusColor(status: string | null): string {
+  const colors: Record<string, string> = {
+    active: 'bg-green-100 text-green-800',
+    draft: 'bg-gray-100 text-gray-800',
+    paused: 'bg-yellow-100 text-yellow-800',
+    completed: 'bg-blue-100 text-blue-800',
+    validated: 'bg-green-100 text-green-800',
+    submitted: 'bg-blue-100 text-blue-800',
+    pending: 'bg-yellow-100 text-yellow-800',
+    rejected: 'bg-red-100 text-red-800',
+  };
+  return status ? colors[status] || 'bg-gray-100 text-gray-800' : 'bg-gray-100 text-gray-800';
 }
