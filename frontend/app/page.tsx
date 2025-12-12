@@ -15,8 +15,20 @@ import CampaignProgress from '@/components/dashboard/CampaignProgress';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import EmissionsChart from '@/components/dashboard/EmissionsChart';
 
+interface DashboardStats {
+  totalSuppliers: number;
+  tier1: number;
+  tier2: number;
+  activeCampaigns: number;
+  totalImds: number;
+  totalPcf: number;
+  pcfIntermediatePlus: number;
+  imdsStats: Record<string, number>;
+  pcfStats: Record<string, number>;
+}
+
 export default function Dashboard() {
-  const [stats, setStats] = useState({
+  const [stats, setStats] = useState<DashboardStats>({
     totalSuppliers: 0,
     tier1: 0,
     tier2: 0,
@@ -24,8 +36,8 @@ export default function Dashboard() {
     totalImds: 0,
     totalPcf: 0,
     pcfIntermediatePlus: 0,
-    imdsStats: {} as Record<string, number>,
-    pcfStats: {} as Record<string, number>,
+    imdsStats: {},
+    pcfStats: {},
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +76,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Vue d'ensemble de l'engagement fournisseurs</p>
+          <p className="text-gray-500 mt-1">Vue d&apos;ensemble de l&apos;engagement fournisseurs</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
@@ -233,7 +245,7 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Objectif SBTi</span>
-              <span className="font-medium">-30% d'ici 2030</span>
+              <span className="font-medium">-30% d&apos;ici 2030</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">Base de données</span>
