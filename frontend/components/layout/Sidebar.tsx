@@ -9,7 +9,8 @@ import {
   Target, 
   Settings,
   Leaf,
-  FileCheck
+  FileCheck,
+  Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -97,14 +98,17 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Footer - Database Status */}
       <div className="p-4 border-t border-gray-200">
-        <div className="bg-gradient-to-r from-primary-50 to-accent-50 rounded-lg p-4">
-          <p className="text-xs font-medium text-gray-700">Mode Démonstration</p>
-          <p className="text-xs text-gray-500 mt-1">Mock Mode actif</p>
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Database className="w-4 h-4 text-green-600" />
+            <p className="text-xs font-medium text-gray-700">Base de données</p>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Neon PostgreSQL</p>
           <div className="mt-2 flex items-center gap-1">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-            <span className="text-xs text-green-600">Connecté</span>
+            <span className="text-xs text-green-600">Connectée</span>
           </div>
         </div>
       </div>
