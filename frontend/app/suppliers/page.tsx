@@ -11,6 +11,7 @@ import {
   Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import AddSupplierModal from '@/components/suppliers/AddSupplierModal';
 
 interface Supplier {
   id: number;
@@ -29,6 +30,8 @@ const countryFlags: Record<string, string> = {
   FR: '🇫🇷',
   JP: '🇯🇵',
   US: '🇺🇸',
+  MX: '🇲🇽',
+  CN: '🇨🇳',
 };
 
 export default function SuppliersPage() {
@@ -37,6 +40,7 @@ export default function SuppliersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterLevel, setFilterLevel] = useState('all');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchSuppliers = async () => {
     try {
@@ -86,7 +90,10 @@ export default function SuppliersPage() {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Rafraîchir
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="btn-primary flex items-center gap-2"
+          >
             <Plus className="w-4 h-4" />
             Ajouter un fournisseur
           </button>
@@ -250,8 +257,15 @@ export default function SuppliersPage() {
       {/* Connection Status */}
       <div className="flex items-center justify-center gap-2 text-sm text-green-600">
         <Database className="w-4 h-4" />
-        <span>Base de données Neon connectée</span>
+        <span>Base de données Neon connectée • {suppliers.length} fournisseurs</span>
       </div>
+
+      {/* Add Supplier Modal */}
+      <AddSupplierModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchSuppliers}
+      />
     </div>
   );
 }
