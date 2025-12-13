@@ -9,10 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.30.1",
+    "@clerk/nextjs": "^6.36.2",
     "@neondatabase/serverless": "^0.10.4",
     "clsx": "^2.1.1",
     "lucide-react": "^0.469.0",
-    "next": "15.1.9",
+    "next": "^16.0.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.15.0",

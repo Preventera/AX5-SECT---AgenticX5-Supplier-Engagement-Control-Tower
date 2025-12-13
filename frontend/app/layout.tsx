@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { ClerkProvider } from '@clerk/nextjs';
+import { frFR } from '@clerk/localizations';
 import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
 
+const inter = Inter({ subsets: ['latin'] });
+
 export const metadata: Metadata = {
-  title: 'AX5-SECT | Supplier Engagement Control Tower',
-  description: 'AgenticX5 Supplier Engagement Control Tower - IMDS & PCF',
-  icons: {
-    icon: '/favicon.ico',
-  },
+  title: 'AX5-SECT | Control Tower',
+  description: 'AgenticX5 Supplier Engagement Control Tower - Gestion IMDS & PCF',
 };
 
 export default function RootLayout({
@@ -17,24 +19,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr">
-      <body className="bg-gray-50 min-h-screen">
-        <div className="flex h-screen overflow-hidden">
-          {/* Sidebar */}
-          <Sidebar />
-          
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Header */}
-            <Header />
-            
-            {/* Page Content */}
-            <main className="flex-1 overflow-y-auto p-6">
-              {children}
-            </main>
+    <ClerkProvider localization={frFR}>
+      <html lang="fr">
+        <body className={inter.className}>
+          <div className="flex h-screen bg-gray-50">
+            <Sidebar />
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <Header />
+              <main className="flex-1 overflow-auto p-6">
+                {children}
+              </main>
+            </div>
           </div>
-        </div>
-      </body>
-    </html>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
