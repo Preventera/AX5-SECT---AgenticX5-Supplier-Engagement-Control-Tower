@@ -20,6 +20,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.imds': 'IMDS',
     'nav.pcf': 'PCF / Carbone',
     'nav.settings': 'Paramètres',
+    'nav.users': 'Utilisateurs',
     'nav.principal': 'PRINCIPAL',
     'nav.modules': 'MODULES',
     
@@ -85,6 +86,24 @@ const translations: Record<Language, Record<string, string>> = {
     'pcf.new': 'Nouvelle déclaration',
     'pcf.total_emissions': 'Émissions totales',
     
+    // Users
+    'users.title': 'Gestion des Utilisateurs',
+    'users.subtitle': 'Gérer les comptes et les rôles',
+    'users.add': 'Ajouter un utilisateur',
+    'users.role': 'Rôle',
+    'users.department': 'Département',
+    'users.last_login': 'Dernière connexion',
+    'users.none_found': 'Aucun utilisateur trouvé',
+    
+    // Auth
+    'auth.login': 'Connexion',
+    'auth.logout': 'Déconnexion',
+    'auth.email': 'Email',
+    'auth.password': 'Mot de passe',
+    'auth.signin': 'Se connecter',
+    'auth.demo_accounts': 'Comptes de démonstration',
+    'auth.quick_login': 'ou connexion rapide',
+    
     // Common
     'common.loading': 'Chargement...',
     'common.error': 'Erreur',
@@ -93,6 +112,8 @@ const translations: Record<Language, Record<string, string>> = {
     'common.saving': 'Sauvegarde...',
     'common.database': 'Base de données',
     'common.connected': 'Connectée',
+    'common.profile': 'Mon profil',
+    'common.access_denied': 'Accès refusé',
     
     // Header
     'header.search': 'Rechercher fournisseurs, campagnes, documents...',
@@ -106,6 +127,7 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.imds': 'IMDS',
     'nav.pcf': 'PCF / Carbon',
     'nav.settings': 'Settings',
+    'nav.users': 'Users',
     'nav.principal': 'MAIN',
     'nav.modules': 'MODULES',
     
@@ -171,6 +193,24 @@ const translations: Record<Language, Record<string, string>> = {
     'pcf.new': 'New Declaration',
     'pcf.total_emissions': 'Total Emissions',
     
+    // Users
+    'users.title': 'User Management',
+    'users.subtitle': 'Manage accounts and roles',
+    'users.add': 'Add User',
+    'users.role': 'Role',
+    'users.department': 'Department',
+    'users.last_login': 'Last login',
+    'users.none_found': 'No users found',
+    
+    // Auth
+    'auth.login': 'Sign In',
+    'auth.logout': 'Logout',
+    'auth.email': 'Email',
+    'auth.password': 'Password',
+    'auth.signin': 'Sign In',
+    'auth.demo_accounts': 'Demo accounts',
+    'auth.quick_login': 'or quick login',
+    
     // Common
     'common.loading': 'Loading...',
     'common.error': 'Error',
@@ -179,6 +219,8 @@ const translations: Record<Language, Record<string, string>> = {
     'common.saving': 'Saving...',
     'common.database': 'Database',
     'common.connected': 'Connected',
+    'common.profile': 'My profile',
+    'common.access_denied': 'Access denied',
     
     // Header
     'header.search': 'Search suppliers, campaigns, documents...',
