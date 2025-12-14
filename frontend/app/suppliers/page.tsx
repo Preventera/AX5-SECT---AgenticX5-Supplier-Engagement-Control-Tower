@@ -5,7 +5,7 @@ import {
   Building2, Plus, Search, RefreshCw, 
   MoreHorizontal, Edit, Trash2, Mail,
   MapPin, CheckCircle, XCircle, Clock,
-  Link2, ExternalLink
+  Link2
 } from 'lucide-react';
 import SupplierModal from '@/components/modals/SupplierModal';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
