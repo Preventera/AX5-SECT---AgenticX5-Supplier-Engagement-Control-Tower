@@ -1,111 +1,144 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { 
-  FileCheck, 
-  Search, 
-  Filter, 
-  RefreshCw,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  FileText,
-  Building2,
-  Calendar,
-  MoreHorizontal
+  FileText, Plus, Search, RefreshCw, 
+  MoreHorizontal, Edit, Trash2, CheckCircle, Clock, XCircle
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import IMDSModal from '@/components/modals/IMDSModal';
+import ConfirmDialog from '@/components/modals/ConfirmDialog';
 
 interface IMDSSubmission {
   id: number;
   supplier_id: number;
-  supplier_name: string;
-  campaign_id: number;
-  campaign_name: string;
-  internal_ref: string;
+  supplier_name?: string;
   mds_id: string;
   part_number: string;
-  oem: string;
-  submitted_at: string;
-  status: string;
-  rejection_reason: string | null;
-  iteration_count: number;
+  part_name?: string;
+  oem?: string;
+  validation_status: string;
+  submitted_at?: string;
+  validated_at?: string;
+  notes?: string;
 }
 
-const statusConfig: Record<string, { label: string; icon: typeof CheckCircle2; class: string; bgClass: string }> = {
-  validated: { 
-    label: 'Validé', 
-    icon: CheckCircle2, 
-    class: 'text-green-700',
-    bgClass: 'bg-green-100'
-  },
-  submitted: { 
-    label: 'Soumis', 
-    icon: Clock, 
-    class: 'text-blue-700',
-    bgClass: 'bg-blue-100'
-  },
-  pending: { 
-    label: 'En attente', 
-    icon: Clock, 
-    class: 'text-yellow-700',
-    bgClass: 'bg-yellow-100'
-  },
-  draft: { 
-    label: 'Brouillon', 
-    icon: FileText, 
-    class: 'text-gray-700',
-    bgClass: 'bg-gray-100'
-  },
-  rejected: { 
-    label: 'Rejeté', 
-    icon: XCircle, 
-    class: 'text-red-700',
-    bgClass: 'bg-red-100'
-  },
-};
+interface Supplier {
+  id: number;
+  name: string;
+}
 
 export default function IMDSPage() {
   const [submissions, setSubmissions] = useState<IMDSSubmission[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  
+  // Modal states
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSubmission, setEditingSubmission] = useState<IMDSSubmission | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [submissionToDelete, setSubmissionToDelete] = useState<IMDSSubmission | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
-  const fetchSubmissions = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await fetch('/api/imds');
-      if (!response.ok) throw new Error('Failed to fetch IMDS submissions');
-      const data = await response.json();
-      setSubmissions(data);
-      setError(null);
-    } catch (err) {
-      setError('Erreur de chargement des soumissions IMDS');
-      console.error(err);
+      const [imdsRes, suppliersRes] = await Promise.all([
+        fetch('/api/imds'),
+        fetch('/api/suppliers')
+      ]);
+      
+      if (imdsRes.ok) {
+        const data = await imdsRes.json();
+        setSubmissions(data);
+      }
+      if (suppliersRes.ok) {
+        const data = await suppliersRes.json();
+        setSuppliers(data);
+      }
+    } catch (error) {
+      console.error('Erreur:', error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSubmissions();
+    fetchData();
   }, []);
 
-  const filteredSubmissions = submissions.filter(sub => {
+  useEffect(() => {
+    const handleClickOutside = () => setOpenMenuId(null);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
+
+  const handleSaveSubmission = async (submission: any) => {
+    const method = submission.id ? 'PUT' : 'POST';
+    const res = await fetch('/api/imds', {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(submission)
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Erreur lors de la sauvegarde');
+    }
+
+    await fetchData();
+  };
+
+  const handleDeleteSubmission = async () => {
+    if (!submissionToDelete) return;
+    
+    setDeleteLoading(true);
+    try {
+      const res = await fetch(`/api/imds?id=${submissionToDelete.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Erreur lors de la suppression');
+      
+      await fetchData();
+      setIsDeleteDialogOpen(false);
+      setSubmissionToDelete(null);
+    } catch (error) {
+      console.error('Erreur:', error);
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const styles: Record<string, { bg: string; text: string; icon: any; label: string }> = {
+      validated: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle, label: 'Validé' },
+      pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'En attente' },
+      rejected: { bg: 'bg-red-100', text: 'text-red-700', icon: XCircle, label: 'Rejeté' },
+    };
+    const style = styles[status] || styles.pending;
+    const Icon = style.icon;
+    return (
+      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+        <Icon className="w-3 h-3" />
+        {style.label}
+      </span>
+    );
+  };
+
+  const filteredSubmissions = submissions.filter(s => {
     const matchesSearch = 
-      sub.mds_id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.supplier_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      sub.part_number?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || sub.status === filterStatus;
+      s.mds_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.part_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.supplier_name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = !filterStatus || s.validation_status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   const stats = {
     total: submissions.length,
-    validated: submissions.filter(s => s.status === 'validated').length,
-    pending: submissions.filter(s => s.status === 'pending' || s.status === 'submitted').length,
-    rejected: submissions.filter(s => s.status === 'rejected').length,
+    validated: submissions.filter(s => s.validation_status === 'validated').length,
+    pending: submissions.filter(s => s.validation_status === 'pending').length,
+    rejected: submissions.filter(s => s.validation_status === 'rejected').length,
   };
 
   return (
@@ -114,195 +147,186 @@ export default function IMDSPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Soumissions IMDS</h1>
-          <p className="text-gray-500 mt-1">Gestion des Material Data Sheets</p>
+          <p className="text-gray-500">Gestion des Material Data Sheets</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
-            onClick={fetchSubmissions}
-            className="btn-secondary flex items-center gap-2"
-            disabled={loading}
+            onClick={fetchData}
+            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             Rafraîchir
           </button>
-          <button className="btn-primary flex items-center gap-2">
-            <FileCheck className="w-4 h-4" />
+          <button 
+            onClick={() => { setEditingSubmission(null); setIsModalOpen(true); }}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
             Nouvelle soumission
           </button>
         </div>
       </div>
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
-
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FileCheck className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total</p>
-              <p className="text-2xl font-bold text-gray-900">{loading ? '...' : stats.total}</p>
-            </div>
-          </div>
+      <div className="grid grid-cols-4 gap-4">
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">Total</p>
+          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-lg border border-green-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <CheckCircle2 className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Validés</p>
-              <p className="text-2xl font-bold text-green-600">{loading ? '...' : stats.validated}</p>
-            </div>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">Validées</p>
+          <p className="text-2xl font-bold text-green-600">{stats.validated}</p>
         </div>
-        <div className="bg-white rounded-lg border border-yellow-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-5 h-5 text-yellow-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">En attente</p>
-              <p className="text-2xl font-bold text-yellow-600">{loading ? '...' : stats.pending}</p>
-            </div>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">En attente</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
         </div>
-        <div className="bg-white rounded-lg border border-red-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
-              <XCircle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Rejetés</p>
-              <p className="text-2xl font-bold text-red-600">{loading ? '...' : stats.rejected}</p>
-            </div>
-          </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4">
+          <p className="text-sm text-gray-500">Rejetées</p>
+          <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-4">
-        <div className="flex-1 relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Rechercher par MDS ID, fournisseur, pièce..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            placeholder="Rechercher par MDS ID, pièce, fournisseur..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
           />
         </div>
-        
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+          className="px-4 py-2 border border-gray-300 rounded-lg bg-white"
         >
-          <option value="all">Tous les statuts</option>
-          <option value="validated">Validés</option>
-          <option value="submitted">Soumis</option>
+          <option value="">Tous les statuts</option>
+          <option value="validated">Validées</option>
           <option value="pending">En attente</option>
-          <option value="rejected">Rejetés</option>
-          <option value="draft">Brouillons</option>
+          <option value="rejected">Rejetées</option>
         </select>
-        
-        <button className="btn-secondary flex items-center gap-2">
-          <Filter className="w-4 h-4" />
-          Plus de filtres
-        </button>
       </div>
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200">
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">MDS ID</th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">FOURNISSEUR</th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">PIÈCE</th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">OEM</th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">STATUT</th>
-              <th className="text-left px-6 py-4 text-sm font-semibold text-gray-900">DATE</th>
-              <th className="text-right px-6 py-4 text-sm font-semibold text-gray-900">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {loading ? (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                  <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
-                  Chargement...
-                </td>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">MDS ID</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fournisseur</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pièce</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">OEM</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
-            ) : filteredSubmissions.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                  Aucune soumission trouvée
-                </td>
-              </tr>
-            ) : (
-              filteredSubmissions.map((submission) => {
-                const status = statusConfig[submission.status] || statusConfig.draft;
-                const StatusIcon = status.icon;
-                return (
-                  <tr key={submission.id} className="hover:bg-gray-50 transition-colors">
+            </thead>
+            <tbody className="divide-y divide-gray-200">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-gray-400" />
+                  </td>
+                </tr>
+              ) : filteredSubmissions.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <FileText className="w-8 h-8 mx-auto text-gray-300 mb-2" />
+                    <p className="text-gray-500">Aucune soumission trouvée</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredSubmissions.map((submission) => (
+                  <tr key={submission.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <FileCheck className="w-4 h-4 text-blue-500" />
-                        <span className="font-mono text-sm font-medium text-gray-900">
-                          {submission.mds_id}
-                        </span>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <span className="font-mono text-sm font-medium">{submission.mds_id}</span>
                       </div>
                     </td>
+                    <td className="px-6 py-4 text-gray-900">{submission.supplier_name || '-'}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-900">{submission.supplier_name}</span>
+                      <p className="font-mono text-sm">{submission.part_number}</p>
+                      {submission.part_name && (
+                        <p className="text-xs text-gray-500">{submission.part_name}</p>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 text-gray-600">{submission.oem || '-'}</td>
+                    <td className="px-6 py-4">{getStatusBadge(submission.validation_status)}</td>
+                    <td className="px-6 py-4">
+                      <div className="relative">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setOpenMenuId(openMenuId === submission.id ? null : submission.id);
+                          }}
+                          className="p-2 hover:bg-gray-100 rounded-lg"
+                        >
+                          <MoreHorizontal className="w-5 h-5 text-gray-400" />
+                        </button>
+                        
+                        {openMenuId === submission.id && (
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                            <button
+                              onClick={() => {
+                                setEditingSubmission(submission);
+                                setIsModalOpen(true);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                            >
+                              <Edit className="w-4 h-4" />
+                              Modifier
+                            </button>
+                            <button
+                              onClick={() => {
+                                setSubmissionToDelete(submission);
+                                setIsDeleteDialogOpen(true);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Supprimer
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{submission.part_number}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{submission.oem}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={cn(
-                        'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium',
-                        status.bgClass,
-                        status.class
-                      )}>
-                        <StatusIcon className="w-3.5 h-3.5" />
-                        {status.label}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1.5 text-sm text-gray-500">
-                        <Calendar className="w-4 h-4" />
-                        {submission.submitted_at 
-                          ? new Date(submission.submitted_at).toLocaleDateString('fr-CA')
-                          : '-'
-                        }
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                        <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                      </button>
                     </td>
                   </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Modal */}
+      <IMDSModal
+        isOpen={isModalOpen}
+        onClose={() => { setIsModalOpen(false); setEditingSubmission(null); }}
+        onSave={handleSaveSubmission}
+        submission={editingSubmission}
+        suppliers={suppliers}
+      />
+
+      {/* Delete Confirmation */}
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => { setIsDeleteDialogOpen(false); setSubmissionToDelete(null); }}
+        onConfirm={handleDeleteSubmission}
+        title="Supprimer la soumission"
+        message={`Êtes-vous sûr de vouloir supprimer la soumission "${submissionToDelete?.mds_id}" ? Cette action est irréversible.`}
+        confirmText="Supprimer"
+        type="danger"
+        loading={deleteLoading}
+      />
     </div>
   );
 }
