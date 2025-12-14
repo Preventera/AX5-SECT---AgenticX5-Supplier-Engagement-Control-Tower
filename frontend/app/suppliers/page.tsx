@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { 
-  Building, Plus, Search, RefreshCw, 
+  Building2, Plus, Search, RefreshCw, 
   MoreHorizontal, Edit, Trash2, Mail,
   MapPin, CheckCircle, XCircle, Clock
 } from 'lucide-react';
 import SupplierModal from '@/components/modals/SupplierModal';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface Supplier {
   id?: number;
@@ -24,20 +25,18 @@ interface Supplier {
 }
 
 export default function SuppliersPage() {
+  const { t } = useTranslation();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTier, setFilterTier] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   
-  // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
-
-  // Dropdown menu state
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
 
   const fetchSuppliers = async () => {
@@ -55,7 +54,7 @@ export default function SuppliersPage() {
         setSuppliers(mappedData);
       }
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -65,7 +64,6 @@ export default function SuppliersPage() {
     fetchSuppliers();
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -87,7 +85,7 @@ export default function SuppliersPage() {
 
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || 'Erreur lors de la sauvegarde');
+      throw new Error(error.error || 'Error saving');
     }
 
     await fetchSuppliers();
@@ -102,15 +100,13 @@ export default function SuppliersPage() {
         method: 'DELETE'
       });
 
-      if (!res.ok) {
-        throw new Error('Erreur lors de la suppression');
-      }
+      if (!res.ok) throw new Error('Error deleting');
 
       await fetchSuppliers();
       setIsDeleteDialogOpen(false);
       setSupplierToDelete(null);
     } catch (error) {
-      console.error('Erreur:', error);
+      console.error('Error:', error);
     } finally {
       setDeleteLoading(false);
     }
@@ -120,45 +116,30 @@ export default function SuppliersPage() {
     setOpenMenuId(openMenuId === id ? null : id);
   };
 
-  const openEditModal = (supplier: Supplier) => {
-    setEditingSupplier({
-      ...supplier,
-      contact_email: supplier.email || supplier.contact_email || ''
-    });
-    setIsModalOpen(true);
-    setOpenMenuId(null);
-  };
-
-  const openDeleteDialog = (supplier: Supplier) => {
-    setSupplierToDelete(supplier);
-    setIsDeleteDialogOpen(true);
-    setOpenMenuId(null);
-  };
-
   const getStatusBadge = (status: string) => {
-    const styles: Record<string, { bg: string; text: string; icon: any; label: string }> = {
-      active: { bg: 'bg-green-100', text: 'text-green-700', icon: CheckCircle, label: 'Actif' },
-      inactive: { bg: 'bg-gray-100', text: 'text-gray-700', icon: XCircle, label: 'Inactif' },
-      pending: { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: Clock, label: 'En attente' },
+    const styles: Record<string, { bg: string; text: string; icon: any }> = {
+      active: { bg: 'bg-[#10b981]/15', text: 'text-[#10b981]', icon: CheckCircle },
+      inactive: { bg: 'bg-[#71717a]/15', text: 'text-[#71717a]', icon: XCircle },
+      pending: { bg: 'bg-[#f59e0b]/15', text: 'text-[#f59e0b]', icon: Clock },
     };
     const style = styles[status] || styles.pending;
     const Icon = style.icon;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${style.bg} ${style.text}`}>
         <Icon className="w-3 h-3" />
-        {style.label}
+        {t(`status.${status}`)}
       </span>
     );
   };
 
   const getTierBadge = (tier: number) => {
     const colors: Record<number, string> = {
-      1: 'bg-blue-100 text-blue-700',
-      2: 'bg-purple-100 text-purple-700',
-      3: 'bg-orange-100 text-orange-700',
+      1: 'bg-[#8b5cf6]/15 text-[#8b5cf6]',
+      2: 'bg-[#06b6d4]/15 text-[#06b6d4]',
+      3: 'bg-[#f59e0b]/15 text-[#f59e0b]',
     };
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors[tier] || 'bg-gray-100 text-gray-700'}`}>
+      <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${colors[tier] || 'bg-[#71717a]/15 text-[#71717a]'}`}>
         Tier-{tier}
       </span>
     );
@@ -181,69 +162,68 @@ export default function SuppliersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fadeIn">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Fournisseurs</h1>
-          <p className="text-gray-500">Gestion des fournisseurs et contacts</p>
+          <h1 className="text-2xl font-bold text-white">{t('suppliers.title')}</h1>
+          <p className="text-[#71717a]">{t('suppliers.subtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <button 
             onClick={fetchSuppliers}
-            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center gap-2"
+            className="btn-secondary flex items-center gap-2"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            Rafraîchir
+            {t('suppliers.refresh')}
           </button>
           <button 
             onClick={() => { setEditingSupplier(null); setIsModalOpen(true); }}
-            className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2"
+            className="btn-primary flex items-center gap-2"
           >
             <Plus className="w-4 h-4" />
-            Ajouter un fournisseur
+            {t('suppliers.add')}
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Total</p>
-          <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
+        <div className="stat-card">
+          <p className="text-sm text-[#71717a]">{t('suppliers.total')}</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.total}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Tier-1</p>
-          <p className="text-2xl font-bold text-blue-600">{stats.tier1}</p>
+        <div className="stat-card">
+          <p className="text-sm text-[#71717a]">Tier-1</p>
+          <p className="text-3xl font-bold text-[#8b5cf6] mt-1">{stats.tier1}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Tier-2</p>
-          <p className="text-2xl font-bold text-purple-600">{stats.tier2}</p>
+        <div className="stat-card">
+          <p className="text-sm text-[#71717a]">Tier-2</p>
+          <p className="text-3xl font-bold text-[#06b6d4] mt-1">{stats.tier2}</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-200 p-4">
-          <p className="text-sm text-gray-500">Actifs</p>
-          <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+        <div className="stat-card">
+          <p className="text-sm text-[#71717a]">{t('suppliers.active')}</p>
+          <p className="text-3xl font-bold text-[#10b981] mt-1">{stats.active}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex items-center gap-4">
         <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
           <input
             type="text"
-            placeholder="Rechercher par nom ou email..."
+            placeholder={t('suppliers.search')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+            className="input-dark w-full pl-10"
           />
         </div>
         <select
           value={filterTier}
           onChange={(e) => setFilterTier(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg bg-white"
         >
-          <option value="">Tous les tiers</option>
+          <option value="">{t('suppliers.all_tiers')}</option>
           <option value="1">Tier-1</option>
           <option value="2">Tier-2</option>
           <option value="3">Tier-3</option>
@@ -251,129 +231,129 @@ export default function SuppliersPage() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg bg-white"
         >
-          <option value="">Tous les statuts</option>
-          <option value="active">Actifs</option>
-          <option value="inactive">Inactifs</option>
-          <option value="pending">En attente</option>
+          <option value="">{t('suppliers.all_status')}</option>
+          <option value="active">{t('status.active')}</option>
+          <option value="inactive">{t('status.inactive')}</option>
+          <option value="pending">{t('status.pending')}</option>
         </select>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+      <div className="card p-0 overflow-hidden">
+        <table className="table-dark">
+          <thead>
+            <tr>
+              <th>{t('suppliers.name')}</th>
+              <th>{t('suppliers.contact')}</th>
+              <th>{t('suppliers.location')}</th>
+              <th>{t('suppliers.tier')}</th>
+              <th>{t('suppliers.status')}</th>
+              <th>{t('suppliers.actions')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fournisseur</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Localisation</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tier</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                <td colSpan={6} className="text-center py-12">
+                  <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#8b5cf6]" />
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <RefreshCw className="w-6 h-6 animate-spin mx-auto text-gray-400" />
-                  </td>
-                </tr>
-              ) : filteredSuppliers.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
-                    <Building className="w-8 h-8 mx-auto text-gray-300 mb-2" />
-                    <p className="text-gray-500">Aucun fournisseur trouvé</p>
-                  </td>
-                </tr>
-              ) : (
-                filteredSuppliers.map((supplier) => (
-                  <tr key={supplier.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <Building className="w-5 h-5 text-emerald-600" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">{supplier.name}</p>
-                          {supplier.industry && (
-                            <p className="text-xs text-gray-500">{supplier.industry}</p>
-                          )}
-                        </div>
+            ) : filteredSuppliers.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="text-center py-12">
+                  <Building2 className="w-10 h-10 mx-auto text-[#3f3f46] mb-3" />
+                  <p className="text-[#71717a]">{t('suppliers.none_found')}</p>
+                </td>
+              </tr>
+            ) : (
+              filteredSuppliers.map((supplier) => (
+                <tr key={supplier.id}>
+                  <td>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#8b5cf6] to-[#06b6d4] flex items-center justify-center">
+                        <Building2 className="w-5 h-5 text-white" />
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {(supplier.email || supplier.contact_email) ? (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Mail className="w-4 h-4 text-gray-400" />
-                          {supplier.email || supplier.contact_email}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                      {supplier.contact_name && (
-                        <p className="text-xs text-gray-500 mt-1">{supplier.contact_name}</p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {supplier.city || supplier.country ? (
-                        <div className="flex items-center gap-1 text-sm text-gray-600">
-                          <MapPin className="w-4 h-4 text-gray-400" />
-                          {[supplier.city, supplier.country].filter(Boolean).join(', ')}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      {getTierBadge(supplier.tier || 1)}
-                    </td>
-                    <td className="px-6 py-4">
-                      {getStatusBadge(supplier.status || 'pending')}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="action-menu relative">
-                        <button
-                          type="button"
-                          onClick={() => toggleMenu(supplier.id || 0)}
-                          className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
-                        >
-                          <MoreHorizontal className="w-5 h-5 text-gray-400" />
-                        </button>
-                        
-                        {openMenuId === supplier.id && (
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
-                            <button
-                              type="button"
-                              onClick={() => openEditModal(supplier)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
-                            >
-                              <Edit className="w-4 h-4" />
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openDeleteDialog(supplier)}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Supprimer
-                            </button>
-                          </div>
+                      <div>
+                        <p className="font-medium text-white">{supplier.name}</p>
+                        {supplier.industry && (
+                          <p className="text-xs text-[#71717a]">{supplier.industry}</p>
                         )}
                       </div>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </td>
+                  <td>
+                    {(supplier.email || supplier.contact_email) ? (
+                      <div className="flex items-center gap-2 text-sm text-[#a1a1aa]">
+                        <Mail className="w-4 h-4 text-[#71717a]" />
+                        {supplier.email || supplier.contact_email}
+                      </div>
+                    ) : (
+                      <span className="text-[#3f3f46]">-</span>
+                    )}
+                  </td>
+                  <td>
+                    {supplier.city || supplier.country ? (
+                      <div className="flex items-center gap-1.5 text-sm text-[#a1a1aa]">
+                        <MapPin className="w-4 h-4 text-[#71717a]" />
+                        {[supplier.city, supplier.country].filter(Boolean).join(', ')}
+                      </div>
+                    ) : (
+                      <span className="text-[#3f3f46]">-</span>
+                    )}
+                  </td>
+                  <td>{getTierBadge(supplier.tier || 1)}</td>
+                  <td>{getStatusBadge(supplier.status || 'pending')}</td>
+                  <td>
+                    <div className="action-menu relative">
+                      <button
+                        type="button"
+                        onClick={() => toggleMenu(supplier.id || 0)}
+                        className="p-2 hover:bg-[#1e1e2a] rounded-lg cursor-pointer text-[#71717a] hover:text-white transition-colors"
+                      >
+                        <MoreHorizontal className="w-5 h-5" />
+                      </button>
+                      
+                      {openMenuId === supplier.id && (
+                        <div className="absolute right-0 mt-1 w-44 bg-[#1a1a25] rounded-lg shadow-xl border border-[#27272a] py-1 z-50">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingSupplier({
+                                ...supplier,
+                                contact_email: supplier.email || supplier.contact_email || ''
+                              });
+                              setIsModalOpen(true);
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-[#a1a1aa] hover:bg-[#27272a] hover:text-white flex items-center gap-2"
+                          >
+                            <Edit className="w-4 h-4" />
+                            {t('suppliers.edit')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSupplierToDelete(supplier);
+                              setIsDeleteDialogOpen(true);
+                              setOpenMenuId(null);
+                            }}
+                            className="w-full px-4 py-2 text-left text-sm text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-2"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            {t('suppliers.delete')}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Modal */}
       <SupplierModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingSupplier(null); }}
@@ -381,14 +361,13 @@ export default function SuppliersPage() {
         supplier={editingSupplier}
       />
 
-      {/* Delete Confirmation */}
       <ConfirmDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => { setIsDeleteDialogOpen(false); setSupplierToDelete(null); }}
         onConfirm={handleDeleteSupplier}
-        title="Supprimer le fournisseur"
-        message={`Êtes-vous sûr de vouloir supprimer "${supplierToDelete?.name}" ? Cette action est irréversible.`}
-        confirmText="Supprimer"
+        title={t('suppliers.delete_confirm')}
+        message={`${t('suppliers.delete_message')} "${supplierToDelete?.name}" ? ${t('suppliers.delete_warning')}`}
+        confirmText={t('suppliers.delete')}
         type="danger"
         loading={deleteLoading}
       />

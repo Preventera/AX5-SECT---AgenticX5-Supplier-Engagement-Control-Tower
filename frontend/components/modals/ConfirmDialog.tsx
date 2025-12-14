@@ -20,8 +20,8 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   message,
-  confirmText = 'Confirmer',
-  cancelText = 'Annuler',
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
   type = 'danger',
   loading = false
 }: ConfirmDialogProps) {
@@ -29,41 +29,41 @@ export default function ConfirmDialog({
 
   const colors = {
     danger: {
-      bg: 'bg-red-100',
-      icon: 'text-red-600',
-      button: 'bg-red-600 hover:bg-red-700'
+      bg: 'bg-[#ef4444]/15',
+      icon: 'text-[#ef4444]',
+      button: 'bg-[#ef4444] hover:bg-[#dc2626]'
     },
     warning: {
-      bg: 'bg-yellow-100',
-      icon: 'text-yellow-600',
-      button: 'bg-yellow-600 hover:bg-yellow-700'
+      bg: 'bg-[#f59e0b]/15',
+      icon: 'text-[#f59e0b]',
+      button: 'bg-[#f59e0b] hover:bg-[#d97706]'
     },
     info: {
-      bg: 'bg-blue-100',
-      icon: 'text-blue-600',
-      button: 'bg-blue-600 hover:bg-blue-700'
+      bg: 'bg-[#06b6d4]/15',
+      icon: 'text-[#06b6d4]',
+      button: 'bg-[#06b6d4] hover:bg-[#0891b2]'
     }
   };
 
   const style = colors[type];
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
-        {/* Header */}
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#16161f] border border-[#27272a] rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+        {/* Content */}
         <div className="flex items-start gap-4 p-6">
           <div className={`w-12 h-12 ${style.bg} rounded-full flex items-center justify-center flex-shrink-0`}>
             <AlertTriangle className={`w-6 h-6 ${style.icon}`} />
           </div>
           <div className="flex-1">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-            <p className="mt-2 text-sm text-gray-600">{message}</p>
+            <h3 className="text-lg font-semibold text-white">{title}</h3>
+            <p className="mt-2 text-sm text-[#a1a1aa]">{message}</p>
           </div>
           <button 
             onClick={onClose}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-[#27272a] rounded-lg transition-colors text-[#71717a] hover:text-white"
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
@@ -72,16 +72,16 @@ export default function ConfirmDialog({
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+            className="btn-secondary disabled:opacity-50"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={loading}
-            className={`px-4 py-2 text-white rounded-lg ${style.button} disabled:opacity-50`}
+            className={`px-4 py-2 rounded-lg text-white font-medium transition-all disabled:opacity-50 ${style.button}`}
           >
-            {loading ? 'Chargement...' : confirmText}
+            {loading ? 'Loading...' : confirmText}
           </button>
         </div>
       </div>

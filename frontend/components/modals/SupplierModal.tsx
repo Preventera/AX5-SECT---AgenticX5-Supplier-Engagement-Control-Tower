@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Building, Mail, User, Globe, MapPin, Factory, Save } from 'lucide-react';
+import { X, Building2, Mail, User, Globe, MapPin, Factory, Save } from 'lucide-react';
+import { useTranslation } from '@/contexts/TranslationContext';
 
 interface Supplier {
   id?: number;
@@ -35,6 +36,7 @@ const defaultSupplier: Supplier = {
 };
 
 export default function SupplierModal({ isOpen, onClose, onSave, supplier }: SupplierModalProps) {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState<Supplier>(defaultSupplier);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,7 +58,7 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
     setError('');
 
     if (!formData.name.trim()) {
-      setError('Le nom est requis');
+      setError(t('suppliers.name') + ' is required');
       return;
     }
 
@@ -65,7 +67,7 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
       await onSave(formData);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Erreur lors de la sauvegarde');
+      setError(err.message || 'Error saving');
     } finally {
       setLoading(false);
     }
@@ -74,42 +76,42 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-[#16161f] border border-[#27272a] rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto animate-fadeIn">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {supplier?.id ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
+        <div className="flex items-center justify-between p-6 border-b border-[#27272a]">
+          <h2 className="text-xl font-semibold text-white">
+            {supplier?.id ? t('suppliers.edit_title') : t('suppliers.new')}
           </h2>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 hover:bg-[#27272a] rounded-lg transition-colors text-[#71717a] hover:text-white"
           >
-            <X className="w-5 h-5 text-gray-500" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            <div className="p-3 bg-[#ef4444]/10 border border-[#ef4444]/30 rounded-lg text-[#ef4444] text-sm">
               {error}
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-4">
-            {/* Nom */}
+            {/* Name */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom de l'entreprise *
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.name')} *
               </label>
               <div className="relative">
-                <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="input-dark w-full pl-10"
                   placeholder="Ex: Marmen Inc."
                 />
               </div>
@@ -117,82 +119,82 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email de contact
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.email')}
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="email"
                   value={formData.contact_email || ''}
                   onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="contact@entreprise.com"
+                  className="input-dark w-full pl-10"
+                  placeholder="contact@company.com"
                 />
               </div>
             </div>
 
             {/* Contact name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nom du contact
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.contact')}
               </label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="text"
                   value={formData.contact_name || ''}
                   onChange={(e) => setFormData({ ...formData, contact_name: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="Jean Dupont"
+                  className="input-dark w-full pl-10"
+                  placeholder="John Doe"
                 />
               </div>
             </div>
 
             {/* Tier */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Niveau (Tier)
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.tier')}
               </label>
               <select
                 value={formData.tier}
                 onChange={(e) => setFormData({ ...formData, tier: parseInt(e.target.value) })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full"
               >
-                <option value={1}>Tier 1 - Direct</option>
-                <option value={2}>Tier 2 - Indirect</option>
-                <option value={3}>Tier 3 - Sous-traitant</option>
+                <option value={1}>{t('tier.direct')}</option>
+                <option value={2}>{t('tier.indirect')}</option>
+                <option value={3}>{t('tier.subcontractor')}</option>
               </select>
             </div>
 
             {/* Status */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Statut
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.status')}
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                className="w-full"
               >
-                <option value="active">Actif</option>
-                <option value="inactive">Inactif</option>
-                <option value="pending">En attente</option>
+                <option value="active">{t('status.active')}</option>
+                <option value="inactive">{t('status.inactive')}</option>
+                <option value="pending">{t('status.pending')}</option>
               </select>
             </div>
 
             {/* Country */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Pays
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.country')}
               </label>
               <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="text"
                   value={formData.country || ''}
                   onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="input-dark w-full pl-10"
                   placeholder="Canada"
                 />
               </div>
@@ -200,16 +202,16 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
 
             {/* City */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ville
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.city')}
               </label>
               <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="text"
                   value={formData.city || ''}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                  className="input-dark w-full pl-10"
                   placeholder="Trois-Rivières"
                 />
               </div>
@@ -217,38 +219,38 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
 
             {/* Industry */}
             <div className="col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Secteur d'activité
+              <label className="block text-sm font-medium text-[#a1a1aa] mb-2">
+                {t('suppliers.industry')}
               </label>
               <div className="relative">
-                <Factory className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Factory className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71717a]" />
                 <input
                   type="text"
                   value={formData.industry || ''}
                   onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="Fabrication métallique"
+                  className="input-dark w-full pl-10"
+                  placeholder="Manufacturing"
                 />
               </div>
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t border-[#27272a]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+              className="btn-secondary"
             >
-              Annuler
+              {t('suppliers.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center gap-2 disabled:opacity-50"
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
-              {loading ? 'Sauvegarde...' : 'Sauvegarder'}
+              {loading ? t('common.saving') : t('suppliers.save')}
             </button>
           </div>
         </form>

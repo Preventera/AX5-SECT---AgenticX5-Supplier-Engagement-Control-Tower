@@ -1,16 +1,12 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
-import { ClerkProvider } from '@clerk/nextjs';
-import { frFR } from '@clerk/localizations';
 import './globals.css';
-import Sidebar from '@/components/layout/Sidebar';
-import Header from '@/components/layout/Header';
-
-const inter = Inter({ subsets: ['latin'] });
+import Sidebar from '@/components/Sidebar';
+import Header from '@/components/Header';
+import { TranslationProvider } from '@/contexts/TranslationContext';
 
 export const metadata: Metadata = {
-  title: 'AX5-SECT | Control Tower',
-  description: 'AgenticX5 Supplier Engagement Control Tower - Gestion IMDS & PCF',
+  title: 'AgenticX5 | Supplier Engagement Control Tower',
+  description: 'IMDS & PCF Management Platform',
 };
 
 export default function RootLayout({
@@ -19,20 +15,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider localization={frFR}>
-      <html lang="fr">
-        <body className={inter.className}>
-          <div className="flex h-screen bg-gray-50">
+    <html lang="fr">
+      <body className="bg-[#0a0a0f] text-white antialiased">
+        <TranslationProvider>
+          <div className="flex min-h-screen">
             <Sidebar />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 ml-64">
               <Header />
-              <main className="flex-1 overflow-auto p-6">
+              <main className="pt-16 p-6 min-h-screen">
                 {children}
               </main>
             </div>
           </div>
-        </body>
-      </html>
-    </ClerkProvider>
+        </TranslationProvider>
+      </body>
+    </html>
   );
 }
