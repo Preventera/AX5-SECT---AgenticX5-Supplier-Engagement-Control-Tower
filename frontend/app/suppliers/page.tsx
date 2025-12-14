@@ -10,10 +10,10 @@ import SupplierModal from '@/components/modals/SupplierModal';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
 
 interface Supplier {
-  id: number;
+  id?: number;
   name: string;
-  email?: string;           // from database
-  contact_email?: string;   // for form compatibility
+  email?: string;
+  contact_email?: string;
   contact_name?: string;
   tier: number;
   country?: string;
@@ -46,10 +46,10 @@ export default function SuppliersPage() {
       const res = await fetch('/api/suppliers');
       if (res.ok) {
         const data = await res.json();
-        // Map email to contact_email for frontend compatibility
+        // Map data from database to frontend format
         const mappedData = data.map((s: any) => ({
           ...s,
-          contact_email: s.email || s.contact_email,
+          contact_email: s.email || s.contact_email || '',
           tier: s.tier || s.supply_chain_level || 1,
           status: s.status || 'active'
         }));
@@ -73,7 +73,7 @@ export default function SuppliersPage() {
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
-  const handleSaveSupplier = async (supplier: any) => {
+  const handleSaveSupplier = async (supplier: Supplier) => {
     const method = supplier.id ? 'PUT' : 'POST';
     const res = await fetch('/api/suppliers', {
       method,
@@ -113,12 +113,10 @@ export default function SuppliersPage() {
   };
 
   const openEditModal = (supplier: Supplier) => {
-    // Ensure contact_email is set for the form
-    const supplierForEdit = {
+    setEditingSupplier({
       ...supplier,
-      contact_email: supplier.email || supplier.contact_email
-    };
-    setEditingSupplier(supplierForEdit);
+      contact_email: supplier.email || supplier.contact_email || ''
+    });
     setIsModalOpen(true);
     setOpenMenuId(null);
   };
@@ -334,7 +332,7 @@ export default function SuppliersPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setOpenMenuId(openMenuId === supplier.id ? null : supplier.id);
+                            setOpenMenuId(openMenuId === supplier.id ? null : supplier.id ?? null);
                           }}
                           className="p-2 hover:bg-gray-100 rounded-lg"
                         >

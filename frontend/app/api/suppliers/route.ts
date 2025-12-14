@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       name, 
-      contact_email,  // from frontend
+      contact_email,  // from frontend form
       contact_name, 
       tier, 
       country, 
@@ -52,6 +52,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use 'email' column in database (not contact_email)
     const result = await sql`
       INSERT INTO suppliers (
         name, email, contact_name, tier, country, city, industry, status, created_at, updated_at
@@ -97,6 +98,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'ID requis' }, { status: 400 });
     }
 
+    // Use 'email' column in database (not contact_email)
     const result = await sql`
       UPDATE suppliers SET
         name = COALESCE(${name}, name),

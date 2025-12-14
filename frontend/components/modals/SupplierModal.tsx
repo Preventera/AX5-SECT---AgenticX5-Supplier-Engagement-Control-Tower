@@ -6,7 +6,8 @@ import { X, Building, Mail, User, Globe, MapPin, Factory, Save } from 'lucide-re
 interface Supplier {
   id?: number;
   name: string;
-  contact_email: string;
+  contact_email?: string;
+  email?: string;
   contact_name?: string;
   tier: number;
   country?: string;
@@ -40,7 +41,10 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
 
   useEffect(() => {
     if (supplier) {
-      setFormData(supplier);
+      setFormData({
+        ...supplier,
+        contact_email: supplier.contact_email || supplier.email || ''
+      });
     } else {
       setFormData(defaultSupplier);
     }
@@ -53,10 +57,6 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
 
     if (!formData.name.trim()) {
       setError('Le nom est requis');
-      return;
-    }
-    if (!formData.contact_email.trim()) {
-      setError('L\'email est requis');
       return;
     }
 
@@ -118,13 +118,13 @@ export default function SupplierModal({ isOpen, onClose, onSave, supplier }: Sup
             {/* Email */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email de contact *
+                Email de contact
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="email"
-                  value={formData.contact_email}
+                  value={formData.contact_email || ''}
                   onChange={(e) => setFormData({ ...formData, contact_email: e.target.value })}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
                   placeholder="contact@entreprise.com"
