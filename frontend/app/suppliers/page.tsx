@@ -4,11 +4,14 @@ import { useEffect, useState } from 'react';
 import { 
   Building2, Plus, Search, RefreshCw, 
   MoreHorizontal, Edit, Trash2, Mail,
-  MapPin, CheckCircle, XCircle, Clock
+  MapPin, CheckCircle, XCircle, Clock,
+  Link2, ExternalLink
 } from 'lucide-react';
 import SupplierModal from '@/components/modals/SupplierModal';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
+import InviteSupplierModal from '@/components/modals/InviteSupplierModal';
 import { useTranslation } from '@/contexts/TranslationContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Supplier {
   id?: number;
@@ -25,7 +28,8 @@ interface Supplier {
 }
 
 export default function SuppliersPage() {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
+  const { hasPermission } = useAuth();
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -38,6 +42,13 @@ export default function SuppliersPage() {
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+  
+  // Portal invitation
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [supplierToInvite, setSupplierToInvite] = useState<Supplier | null>(null);
+
+  const canWrite = hasPermission('suppliers:write');
+  const canDelete = hasPermission('suppliers:delete');
 
   const fetchSuppliers = async () => {
     setLoading(true);
@@ -177,13 +188,15 @@ export default function SuppliersPage() {
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
             {t('suppliers.refresh')}
           </button>
-          <button 
-            onClick={() => { setEditingSupplier(null); setIsModalOpen(true); }}
-            className="btn-primary flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            {t('suppliers.add')}
-          </button>
+          {canWrite && (
+            <button 
+              onClick={() => { setEditingSupplier(null); setIsModalOpen(true); }}
+              className="btn-primary flex items-center gap-2"
+            >
+              <Plus className="w-4 h-4" />
+              {t('suppliers.add')}
+            </button>
+          )}
         </div>
       </div>
 
@@ -315,34 +328,55 @@ export default function SuppliersPage() {
                       </button>
                       
                       {openMenuId === supplier.id && (
-                        <div className="absolute right-0 mt-1 w-44 bg-[#1a1a25] rounded-lg shadow-xl border border-[#27272a] py-1 z-50">
+                        <div className="absolute right-0 mt-1 w-52 bg-[#1a1a25] rounded-lg shadow-xl border border-[#27272a] py-1 z-50">
+                          {/* Invite to portal */}
                           <button
                             type="button"
                             onClick={() => {
-                              setEditingSupplier({
-                                ...supplier,
-                                contact_email: supplier.email || supplier.contact_email || ''
-                              });
-                              setIsModalOpen(true);
+                              setSupplierToInvite(supplier);
+                              setIsInviteModalOpen(true);
                               setOpenMenuId(null);
                             }}
-                            className="w-full px-4 py-2 text-left text-sm text-[#a1a1aa] hover:bg-[#27272a] hover:text-white flex items-center gap-2"
+                            className="w-full px-4 py-2 text-left text-sm text-[#06b6d4] hover:bg-[#06b6d4]/10 flex items-center gap-2"
                           >
-                            <Edit className="w-4 h-4" />
-                            {t('suppliers.edit')}
+                            <Link2 className="w-4 h-4" />
+                            {lang === 'fr' ? 'Inviter au portail' : 'Invite to portal'}
                           </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSupplierToDelete(supplier);
-                              setIsDeleteDialogOpen(true);
-                              setOpenMenuId(null);
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-2"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            {t('suppliers.delete')}
-                          </button>
+                          
+                          <div className="border-t border-[#27272a] my-1"></div>
+                          
+                          {canWrite && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingSupplier({
+                                  ...supplier,
+                                  contact_email: supplier.email || supplier.contact_email || ''
+                                });
+                                setIsModalOpen(true);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-[#a1a1aa] hover:bg-[#27272a] hover:text-white flex items-center gap-2"
+                            >
+                              <Edit className="w-4 h-4" />
+                              {t('suppliers.edit')}
+                            </button>
+                          )}
+                          
+                          {canDelete && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSupplierToDelete(supplier);
+                                setIsDeleteDialogOpen(true);
+                                setOpenMenuId(null);
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-[#ef4444] hover:bg-[#ef4444]/10 flex items-center gap-2"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              {t('suppliers.delete')}
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -354,6 +388,7 @@ export default function SuppliersPage() {
         </table>
       </div>
 
+      {/* Modals */}
       <SupplierModal
         isOpen={isModalOpen}
         onClose={() => { setIsModalOpen(false); setEditingSupplier(null); }}
@@ -370,6 +405,12 @@ export default function SuppliersPage() {
         confirmText={t('suppliers.delete')}
         type="danger"
         loading={deleteLoading}
+      />
+
+      <InviteSupplierModal
+        isOpen={isInviteModalOpen}
+        onClose={() => { setIsInviteModalOpen(false); setSupplierToInvite(null); }}
+        supplier={supplierToInvite}
       />
     </div>
   );
