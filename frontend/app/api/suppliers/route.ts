@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { 
       name, 
-      contact_email, 
+      contact_email,  // from frontend
       contact_name, 
       tier, 
       country, 
@@ -45,19 +45,19 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validation
-    if (!name || !contact_email) {
+    if (!name) {
       return NextResponse.json(
-        { error: 'Nom et email sont requis' }, 
+        { error: 'Nom est requis' }, 
         { status: 400 }
       );
     }
 
     const result = await sql`
       INSERT INTO suppliers (
-        name, contact_email, contact_name, tier, country, city, industry, status, created_at, updated_at
+        name, email, contact_name, tier, country, city, industry, status, created_at, updated_at
       ) VALUES (
         ${name}, 
-        ${contact_email}, 
+        ${contact_email || null}, 
         ${contact_name || null}, 
         ${tier || 1}, 
         ${country || null}, 
@@ -84,7 +84,7 @@ export async function PUT(request: NextRequest) {
     const { 
       id,
       name, 
-      contact_email, 
+      contact_email,  // from frontend, maps to 'email' column
       contact_name, 
       tier, 
       country, 
@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest) {
     const result = await sql`
       UPDATE suppliers SET
         name = COALESCE(${name}, name),
-        contact_email = COALESCE(${contact_email}, contact_email),
+        email = COALESCE(${contact_email}, email),
         contact_name = COALESCE(${contact_name}, contact_name),
         tier = COALESCE(${tier}, tier),
         country = COALESCE(${country}, country),

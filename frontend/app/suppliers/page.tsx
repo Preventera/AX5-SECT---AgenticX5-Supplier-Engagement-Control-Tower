@@ -12,7 +12,8 @@ import ConfirmDialog from '@/components/modals/ConfirmDialog';
 interface Supplier {
   id: number;
   name: string;
-  contact_email: string;
+  email?: string;           // from database
+  contact_email?: string;   // for form compatibility
   contact_name?: string;
   tier: number;
   country?: string;
@@ -45,7 +46,14 @@ export default function SuppliersPage() {
       const res = await fetch('/api/suppliers');
       if (res.ok) {
         const data = await res.json();
-        setSuppliers(data);
+        // Map email to contact_email for frontend compatibility
+        const mappedData = data.map((s: any) => ({
+          ...s,
+          contact_email: s.email || s.contact_email,
+          tier: s.tier || s.supply_chain_level || 1,
+          status: s.status || 'active'
+        }));
+        setSuppliers(mappedData);
       }
     } catch (error) {
       console.error('Erreur:', error);
@@ -105,7 +113,12 @@ export default function SuppliersPage() {
   };
 
   const openEditModal = (supplier: Supplier) => {
-    setEditingSupplier(supplier);
+    // Ensure contact_email is set for the form
+    const supplierForEdit = {
+      ...supplier,
+      contact_email: supplier.email || supplier.contact_email
+    };
+    setEditingSupplier(supplierForEdit);
     setIsModalOpen(true);
     setOpenMenuId(null);
   };
@@ -147,8 +160,9 @@ export default function SuppliersPage() {
 
   // Filter suppliers
   const filteredSuppliers = suppliers.filter(s => {
+    const email = s.email || s.contact_email || '';
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          s.contact_email.toLowerCase().includes(searchTerm.toLowerCase());
+                          email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTier = !filterTier || s.tier === parseInt(filterTier);
     const matchesStatus = !filterStatus || s.status === filterStatus;
     return matchesSearch && matchesTier && matchesStatus;
@@ -287,10 +301,14 @@ export default function SuppliersPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        {supplier.contact_email}
-                      </div>
+                      {(supplier.email || supplier.contact_email) ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Mail className="w-4 h-4 text-gray-400" />
+                          {supplier.email || supplier.contact_email}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">-</span>
+                      )}
                       {supplier.contact_name && (
                         <p className="text-xs text-gray-500 mt-1">{supplier.contact_name}</p>
                       )}
@@ -306,10 +324,10 @@ export default function SuppliersPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {getTierBadge(supplier.tier)}
+                      {getTierBadge(supplier.tier || 1)}
                     </td>
                     <td className="px-6 py-4">
-                      {getStatusBadge(supplier.status)}
+                      {getStatusBadge(supplier.status || 'pending')}
                     </td>
                     <td className="px-6 py-4">
                       <div className="relative">
