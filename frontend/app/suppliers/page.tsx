@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { 
   Building, Plus, Search, RefreshCw, 
   MoreHorizontal, Edit, Trash2, Mail,
-  Globe, MapPin, CheckCircle, XCircle, Clock
+  MapPin, CheckCircle, XCircle, Clock
 } from 'lucide-react';
 import SupplierModal from '@/components/modals/SupplierModal';
 import ConfirmDialog from '@/components/modals/ConfirmDialog';
@@ -46,7 +46,6 @@ export default function SuppliersPage() {
       const res = await fetch('/api/suppliers');
       if (res.ok) {
         const data = await res.json();
-        // Map data from database to frontend format
         const mappedData = data.map((s: any) => ({
           ...s,
           contact_email: s.email || s.contact_email || '',
@@ -68,7 +67,12 @@ export default function SuppliersPage() {
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setOpenMenuId(null);
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('.action-menu')) {
+        setOpenMenuId(null);
+      }
+    };
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -110,6 +114,10 @@ export default function SuppliersPage() {
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const toggleMenu = (id: number) => {
+    setOpenMenuId(openMenuId === id ? null : id);
   };
 
   const openEditModal = (supplier: Supplier) => {
@@ -156,7 +164,6 @@ export default function SuppliersPage() {
     );
   };
 
-  // Filter suppliers
   const filteredSuppliers = suppliers.filter(s => {
     const email = s.email || s.contact_email || '';
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -166,7 +173,6 @@ export default function SuppliersPage() {
     return matchesSearch && matchesTier && matchesStatus;
   });
 
-  // Stats
   const stats = {
     total: suppliers.length,
     tier1: suppliers.filter(s => s.tier === 1).length,
@@ -328,29 +334,29 @@ export default function SuppliersPage() {
                       {getStatusBadge(supplier.status || 'pending')}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="relative">
+                      <div className="action-menu relative">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setOpenMenuId(openMenuId === supplier.id ? null : supplier.id ?? null);
-                          }}
-                          className="p-2 hover:bg-gray-100 rounded-lg"
+                          type="button"
+                          onClick={() => toggleMenu(supplier.id || 0)}
+                          className="p-2 hover:bg-gray-100 rounded-lg cursor-pointer"
                         >
                           <MoreHorizontal className="w-5 h-5 text-gray-400" />
                         </button>
                         
                         {openMenuId === supplier.id && (
-                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
+                          <div className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
                             <button
+                              type="button"
                               onClick={() => openEditModal(supplier)}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 cursor-pointer"
                             >
                               <Edit className="w-4 h-4" />
                               Modifier
                             </button>
                             <button
+                              type="button"
                               onClick={() => openDeleteDialog(supplier)}
-                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2 cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                               Supprimer
