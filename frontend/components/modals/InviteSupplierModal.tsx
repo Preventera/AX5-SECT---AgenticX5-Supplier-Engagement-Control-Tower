@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Mail, Link2, Copy, Check, Send, Loader2, Calendar, ExternalLink } from 'lucide-react';
 
 interface InviteSupplierModalProps {
   isOpen: boolean;
   onClose: () => void;
   supplier: {
-    id: number;
+    id?: number;
     name: string;
     email?: string;
+    contact_email?: string;
     contact_name?: string;
   } | null;
 }
@@ -28,17 +29,19 @@ export default function InviteSupplierModal({ isOpen, onClose, supplier }: Invit
   });
 
   // Reset form when opening
-  const resetForm = () => {
-    setFormData({
-      contact_email: supplier?.email || '',
-      contact_name: supplier?.contact_name || '',
-      expires_days: 30
-    });
-    setError('');
-    setSuccess(false);
-    setPortalUrl('');
-    setCopied(false);
-  };
+  useEffect(() => {
+    if (isOpen && supplier) {
+      setFormData({
+        contact_email: supplier.email || supplier.contact_email || '',
+        contact_name: supplier.contact_name || '',
+        expires_days: 30
+      });
+      setError('');
+      setSuccess(false);
+      setPortalUrl('');
+      setCopied(false);
+    }
+  }, [isOpen, supplier]);
 
   if (!isOpen || !supplier) return null;
 
@@ -47,6 +50,11 @@ export default function InviteSupplierModal({ isOpen, onClose, supplier }: Invit
     
     if (!formData.contact_email) {
       setError('L\'email est requis');
+      return;
+    }
+
+    if (!supplier.id) {
+      setError('ID fournisseur manquant');
       return;
     }
 
@@ -85,7 +93,10 @@ export default function InviteSupplierModal({ isOpen, onClose, supplier }: Invit
   };
 
   const handleClose = () => {
-    resetForm();
+    setError('');
+    setSuccess(false);
+    setPortalUrl('');
+    setCopied(false);
     onClose();
   };
 
