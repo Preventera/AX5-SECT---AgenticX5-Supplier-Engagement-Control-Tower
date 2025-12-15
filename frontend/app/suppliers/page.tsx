@@ -415,3 +415,5 @@ export default function SuppliersPage() {
     </div>
   );
 }
+
+// Portal invite feature added
